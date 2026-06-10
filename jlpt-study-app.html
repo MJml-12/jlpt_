@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0a0f">
+<title>JLPT Study — N3/N2</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&family=Space+Mono:wght@400;700&family=Unbounded:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a26;--border:#2a2a3a;
+    --accent:#7c6aff;--accent2:#ff6a9b;--accent3:#6affcc;
+    --text:#e8e8f0;--text-dim:#7a7a9a;--correct:#6affcc;--wrong:#ff6a6a;
+    --font-jp:'Noto Sans JP',sans-serif;--font-mono:'Space Mono',monospace;
+    --font-display:'Unbounded',sans-serif;--radius:16px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--text);font-family:var(--font-jp);min-height:100vh;max-width:480px;margin:0 auto;overflow-x:hidden}
+  .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:rgba(18,18,26,.95);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+  .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 4px 10px;background:none;border:none;color:var(--text-dim);font-family:var(--font-jp);font-size:9px;cursor:pointer;transition:color .2s;position:relative}
+  .nav-btn.active{color:var(--accent)}
+  .nav-btn.active::before{content:'';position:absolute;top:0;left:20%;right:20%;height:2px;background:var(--accent);border-radius:0 0 4px 4px}
+  .nav-icon{font-size:20px;line-height:1}
+  .page{display:none;padding:24px 16px 100px;min-height:100vh}
+  .page.active{display:block}
+  .home-header{padding:40px 0 32px;text-align:center}
+  .home-logo{font-family:var(--font-display);font-size:11px;font-weight:700;letter-spacing:.3em;color:var(--text-dim);text-transform:uppercase;margin-bottom:12px}
+  .home-title{font-family:var(--font-display);font-size:38px;font-weight:900;line-height:1;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+  .home-sub{color:var(--text-dim);font-size:13px}
+  .level-toggle{display:flex;gap:8px;background:var(--surface);border-radius:50px;padding:4px;margin:20px 0}
+  .level-btn{flex:1;padding:10px;border:none;border-radius:46px;font-family:var(--font-display);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;background:none;color:var(--text-dim)}
+  .level-btn.active{background:var(--accent);color:#fff}
+  .stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:28px}
+  .stat-card{background:var(--surface);border-radius:var(--radius);padding:14px 10px;text-align:center;border:1px solid var(--border)}
+  .stat-num{font-family:var(--font-mono);font-size:22px;font-weight:700;color:var(--accent)}
+  .stat-label{font-size:10px;color:var(--text-dim);margin-top:2px}
+  .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .menu-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 16px;cursor:pointer;transition:all .2s;text-align:left}
+  .menu-card:active{transform:scale(.97)}
+  .menu-card:hover{border-color:var(--accent)}
+  .menu-emoji{font-size:28px;margin-bottom:10px;display:block}
+  .menu-title{font-family:var(--font-display);font-size:12px;font-weight:700;margin-bottom:4px}
+  .menu-desc{font-size:11px;color:var(--text-dim);line-height:1.4}
+  .menu-card.vocab{border-top:3px solid var(--accent)}
+  .menu-card.grammar{border-top:3px solid var(--accent2)}
+  .menu-card.mock{border-top:3px solid var(--accent3)}
+  .menu-card.kanji{border-top:3px solid #ffa76a}
+  .ai-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:50px;font-size:9px;font-family:var(--font-mono);background:rgba(124,106,255,.15);color:var(--accent);border:1px solid rgba(124,106,255,.3);margin-top:6px}
+  .sec-header{display:flex;align-items:center;gap:12px;margin-bottom:24px;padding-top:8px}
+  .sec-back{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .sec-title{font-family:var(--font-display);font-size:16px;font-weight:700}
+  .sec-badge{margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--text-dim)}
+  .card-container{perspective:1000px;margin:20px 0}
+  .flashcard{width:100%;min-height:240px;position:relative;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1);cursor:pointer}
+  .flashcard.flipped{transform:rotateY(180deg)}
+  .card-face{position:absolute;inset:0;backface-visibility:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center}
+  .card-back{transform:rotateY(180deg)}
+  .card-jp{font-size:52px;font-weight:700;line-height:1.1;margin-bottom:12px;color:var(--text)}
+  .card-reading{font-size:18px;color:var(--accent);margin-bottom:8px}
+  .card-meaning{font-size:16px;color:var(--text)}
+  .card-hint{font-size:11px;color:var(--text-dim);margin-top:20px}
+  .card-type{position:absolute;top:16px;left:16px;font-size:10px;font-family:var(--font-mono);color:var(--text-dim);text-transform:uppercase;letter-spacing:.1em}
+  .card-progress{display:flex;gap:4px;margin:12px 0;justify-content:center;flex-wrap:wrap}
+  .cp-dot{width:6px;height:6px;border-radius:50%;background:var(--border);transition:background .3s}
+  .cp-dot.done{background:var(--accent)}
+  .cp-dot.current{background:var(--accent2);transform:scale(1.3)}
+  .vocab-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+  .btn-know{padding:16px;border-radius:var(--radius);border:2px solid var(--correct);background:none;color:var(--correct);font-family:var(--font-display);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
+  .btn-know:active{background:var(--correct);color:#000}
+  .btn-dontknow{padding:16px;border-radius:var(--radius);border:2px solid var(--wrong);background:none;color:var(--wrong);font-family:var(--font-display);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
+  .btn-dontknow:active{background:var(--wrong);color:#fff}
+  .quiz-q{background:var(--surface);border-radius:20px;padding:28px 20px;margin-bottom:20px;border:1px solid var(--border);text-align:center}
+  .quiz-q-text{font-size:18px;line-height:1.6;margin-bottom:8px}
+  .quiz-choices{display:flex;flex-direction:column;gap:10px}
+  .choice-btn{padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--font-jp);font-size:15px;text-align:left;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:12px}
+  .choice-btn:active{transform:scale(.98)}
+  .choice-btn.correct{border-color:var(--correct);background:rgba(106,255,204,.08);color:var(--correct)}
+  .choice-btn.wrong{border-color:var(--wrong);background:rgba(255,106,106,.08);color:var(--wrong)}
+  .choice-num{width:28px;height:28px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:12px;flex-shrink:0}
+  .explain-box{background:var(--surface2);border-radius:var(--radius);padding:16px;margin-top:12px;border-left:3px solid var(--accent);font-size:13px;line-height:1.7;color:var(--text-dim);display:none}
+  .explain-box.show{display:block}
+  .quiz-nav{display:flex;gap:10px;margin-top:16px}
+  .btn-primary{flex:1;padding:16px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-family:var(--font-display);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
+  .btn-primary:active{opacity:.8}
+  .btn-secondary{padding:16px 20px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);font-family:var(--font-display);font-size:13px;cursor:pointer}
+  .mock-config{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:24px 0}
+  .config-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:all .2s;text-align:center}
+  .config-card.selected{border-color:var(--accent);background:rgba(124,106,255,.1)}
+  .config-card-num{font-family:var(--font-mono);font-size:28px;font-weight:700;color:var(--accent);margin-bottom:4px}
+  .config-card-label{font-size:11px;color:var(--text-dim)}
+  .timer-display{font-family:var(--font-mono);font-size:32px;font-weight:700;color:var(--accent);text-align:center;margin-bottom:12px}
+  .timer-display.warning{color:var(--wrong)}
+  .progress-bar{height:4px;background:var(--border);border-radius:2px;margin-bottom:20px;overflow:hidden}
+  .progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .3s}
+  .result-screen{text-align:center;padding:20px 0}
+  .result-score{font-family:var(--font-display);font-size:72px;font-weight:900;line-height:1;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:20px 0 8px}
+  .result-label{color:var(--text-dim);margin-bottom:24px}
+  .result-detail{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:24px}
+  .result-item{background:var(--surface);border-radius:var(--radius);padding:14px 10px}
+  .result-item-num{font-family:var(--font-mono);font-size:20px;font-weight:700}
+  .result-item-num.c{color:var(--correct)}
+  .result-item-num.w{color:var(--wrong)}
+  .result-item-num.t{color:var(--accent)}
+  .result-item-label{font-size:10px;color:var(--text-dim);margin-top:2px}
+  .kanji-card{background:var(--surface);border-radius:20px;border:1px solid var(--border);padding:32px 24px;text-align:center;margin-bottom:20px}
+  .kanji-big{font-size:90px;line-height:1;margin-bottom:16px;display:block}
+  .kanji-answer-row{display:flex;flex-direction:column;gap:10px}
+  .section-label{font-family:var(--font-mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px}
+  .loading-box{text-align:center;padding:40px 20px;color:var(--text-dim)}
+  .loading-spinner{font-size:32px;animation:spin 1s linear infinite;display:block;margin-bottom:12px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .source-tag{font-size:10px;font-family:var(--font-mono);padding:2px 8px;border-radius:50px;background:rgba(106,255,204,.1);color:var(--accent3);border:1px solid rgba(106,255,204,.2);margin-left:auto}
+  .source-tag.ai{background:rgba(255,106,155,.1);color:var(--accent2);border-color:rgba(255,106,155,.2)}
+  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:12px 20px;border-radius:50px;font-size:13px;z-index:200;opacity:0;transition:opacity .3s;white-space:nowrap;pointer-events:none}
+  .toast.show{opacity:1}
+  @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  .page.active .menu-card{animation:slideUp .4s ease both}
+  .page.active .menu-card:nth-child(2){animation-delay:.05s}
+  .page.active .menu-card:nth-child(3){animation-delay:.1s}
+  .page.active .menu-card:nth-child(4){animation-delay:.15s}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <div class="home-header">
+    <div class="home-logo">JLPT Study</div>
+    <div class="home-title">日本語</div>
+    <div class="home-sub">N3 / N2 — Belajar tiap hari, lulus pasti 🎯</div>
+  </div>
+  <div class="level-toggle">
+    <button class="level-btn active" onclick="setLevel('N3',this)">N3</button>
+    <button class="level-btn" onclick="setLevel('N2',this)">N2</button>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num" id="stat-vocab">0</div><div class="stat-label">Vocab<br>Dipelajari</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-streak">0</div><div class="stat-label">Hari<br>Berturut</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-acc">—</div><div class="stat-label">Akurasi<br>Quiz</div></div>
+  </div>
+  <div class="section-label">PILIH MODE BELAJAR</div>
+  <div class="menu-grid">
+    <div class="menu-card vocab" onclick="goSection('vocab')">
+      <span class="menu-emoji">🗂</span>
+      <div class="menu-title">VOCAB DRILL</div>
+      <div class="menu-desc">Kartu bolak-balik dari JLPT API</div>
+    </div>
+    <div class="menu-card grammar" onclick="goSection('grammar')">
+      <span class="menu-emoji">📝</span>
+      <div class="menu-title">GRAMMAR</div>
+      <div class="menu-desc">Soal AI + 50 soal lokal</div>
+      <div class="ai-badge">✨ AI powered</div>
+    </div>
+    <div class="menu-card mock" onclick="goSection('mock')">
+      <span class="menu-emoji">⏱</span>
+      <div class="menu-title">MOCK TEST</div>
+      <div class="menu-desc">Simulasi ujian dengan timer</div>
+    </div>
+    <div class="menu-card kanji" onclick="goSection('kanji')">
+      <span class="menu-emoji">🈳</span>
+      <div class="menu-title">KANJI QUIZ</div>
+      <div class="menu-desc">Soal AI + 40 kanji lokal</div>
+      <div class="ai-badge">✨ AI powered</div>
+    </div>
+  </div>
+</div>
+
+<!-- VOCAB -->
+<div class="page" id="page-vocab">
+  <div class="sec-header">
+    <button class="sec-back" onclick="goHome()">←</button>
+    <div class="sec-title">🗂 Vocab Drill</div>
+    <div class="sec-badge" id="vocab-counter">1/20</div>
+  </div>
+  <div class="card-progress" id="vocab-progress"></div>
+  <div id="vocab-loading" class="loading-box" style="display:none">
+    <span class="loading-spinner">⏳</span>Mengambil kata dari API...
+  </div>
+  <div class="card-container" id="vocab-card-wrap">
+    <div class="flashcard" id="flashcard" onclick="flipCard()">
+      <div class="card-face card-front">
+        <div class="card-type" id="card-type-label">VOCAB</div>
+        <div class="card-jp" id="card-jp">食べ物</div>
+        <div class="card-hint">Tap untuk lihat arti ↻</div>
+      </div>
+      <div class="card-face card-back">
+        <div class="card-type">ARTI</div>
+        <div class="card-reading" id="card-reading">たべもの</div>
+        <div class="card-meaning" id="card-meaning">Makanan</div>
+      </div>
+    </div>
+  </div>
+  <div class="vocab-actions" id="vocab-actions" style="display:none">
+    <button class="btn-dontknow" onclick="answerCard(false)">✗ Ulangi</button>
+    <button class="btn-know" onclick="answerCard(true)">✓ Tahu</button>
+  </div>
+  <div style="text-align:center;margin-top:12px;color:var(--text-dim);font-size:12px" id="vocab-tap-hint">Tap kartu untuk lihat jawaban</div>
+</div>
+
+<!-- GRAMMAR -->
+<div class="page" id="page-grammar">
+  <div class="sec-header">
+    <button class="sec-back" onclick="goHome()">←</button>
+    <div class="sec-title">📝 Grammar</div>
+    <div class="sec-badge" id="grammar-counter">1/10</div>
+    <span class="source-tag ai" id="grammar-source-tag">AI</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="grammar-progress" style="width:0%"></div></div>
+  <div id="grammar-loading" class="loading-box" style="display:none">
+    <span class="loading-spinner">🤖</span>AI sedang membuat soal grammar...
+  </div>
+  <div id="grammar-content">
+    <div class="quiz-q">
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-family:var(--font-mono)" id="grammar-tag"></div>
+      <div class="quiz-q-text" id="grammar-q"></div>
+    </div>
+    <div class="quiz-choices" id="grammar-choices"></div>
+    <div class="explain-box" id="grammar-explain"></div>
+    <div class="quiz-nav">
+      <button class="btn-primary" id="grammar-next-btn" onclick="nextGrammar()" style="display:none">Soal Berikutnya →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MOCK TEST -->
+<div class="page" id="page-mock">
+  <div class="sec-header">
+    <button class="sec-back" onclick="goHome()">←</button>
+    <div class="sec-title">⏱ Mock Test</div>
+  </div>
+  <div id="mock-setup">
+    <p style="color:var(--text-dim);font-size:13px;margin-bottom:20px">Pilih jumlah soal:</p>
+    <div class="mock-config">
+      <div class="config-card selected" onclick="selectMockNum(10,this)"><div class="config-card-num">10</div><div class="config-card-label">~5 menit</div></div>
+      <div class="config-card" onclick="selectMockNum(20,this)"><div class="config-card-num">20</div><div class="config-card-label">~10 menit</div></div>
+      <div class="config-card" onclick="selectMockNum(30,this)"><div class="config-card-num">30</div><div class="config-card-label">~15 menit</div></div>
+      <div class="config-card" onclick="selectMockNum(40,this)"><div class="config-card-num">40</div><div class="config-card-label">~20 menit</div></div>
+    </div>
+    <button class="btn-primary" onclick="startMock()">Mulai Ujian 🚀</button>
+  </div>
+  <div id="mock-test" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="font-size:12px;color:var(--text-dim)" id="mock-counter">1/10</div>
+      <div class="timer-display" id="mock-timer" style="font-size:22px;margin:0">00:00</div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="mock-progress" style="width:0%"></div></div>
+    <div class="quiz-q">
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-family:var(--font-mono)" id="mock-tag"></div>
+      <div class="quiz-q-text" id="mock-q"></div>
+    </div>
+    <div class="quiz-choices" id="mock-choices"></div>
+    <div class="explain-box" id="mock-explain"></div>
+    <div class="quiz-nav"><button class="btn-primary" id="mock-next-btn" onclick="nextMock()" style="display:none">次へ →</button></div>
+  </div>
+  <div id="mock-result" style="display:none" class="result-screen">
+    <div style="font-size:40px">🎉</div>
+    <div style="font-family:var(--font-display);font-size:13px;color:var(--text-dim);margin-top:8px">HASIL UJIAN</div>
+    <div class="result-score" id="result-pct">80%</div>
+    <div class="result-label" id="result-verdict"></div>
+    <div class="result-detail">
+      <div class="result-item"><div class="result-item-num c" id="res-correct">8</div><div class="result-item-label">Benar</div></div>
+      <div class="result-item"><div class="result-item-num w" id="res-wrong">2</div><div class="result-item-label">Salah</div></div>
+      <div class="result-item"><div class="result-item-num t" id="res-time">4:32</div><div class="result-item-label">Waktu</div></div>
+    </div>
+    <button class="btn-primary" onclick="resetMock()">Coba Lagi</button>
+  </div>
+</div>
+
+<!-- KANJI -->
+<div class="page" id="page-kanji">
+  <div class="sec-header">
+    <button class="sec-back" onclick="goHome()">←</button>
+    <div class="sec-title">🈳 Kanji Quiz</div>
+    <div class="sec-badge" id="kanji-counter">1/20</div>
+    <span class="source-tag ai" id="kanji-source-tag">AI</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="kanji-progress" style="width:0%"></div></div>
+  <div class="level-toggle" style="margin-bottom:16px">
+    <button class="level-btn active" onclick="setKanjiMode('reading',this)">Reading</button>
+    <button class="level-btn" onclick="setKanjiMode('meaning',this)">Arti</button>
+  </div>
+  <div id="kanji-loading" class="loading-box" style="display:none">
+    <span class="loading-spinner">🤖</span>AI sedang membuat soal kanji...
+  </div>
+  <div id="kanji-content">
+    <div class="kanji-card">
+      <span class="kanji-big" id="kanji-char">駅</span>
+      <div style="font-size:11px;color:var(--text-dim)" id="kanji-mode-label">Pilih cara baca yang benar:</div>
+    </div>
+    <div class="kanji-answer-row" id="kanji-choices"></div>
+    <div class="explain-box" id="kanji-explain"></div>
+    <div class="quiz-nav"><button class="btn-primary" id="kanji-next-btn" onclick="nextKanji()" style="display:none">次へ →</button></div>
+  </div>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" id="nav-home" onclick="showPage('home')"><span class="nav-icon">🏠</span>ホーム</button>
+  <button class="nav-btn" id="nav-vocab" onclick="goSection('vocab')"><span class="nav-icon">🗂</span>Vocab</button>
+  <button class="nav-btn" id="nav-grammar" onclick="goSection('grammar')"><span class="nav-icon">📝</span>Grammar</button>
+  <button class="nav-btn" id="nav-kanji" onclick="goSection('kanji')"><span class="nav-icon">🈳</span>Kanji</button>
+</nav>
+
+<script>
+// ============================================================
+// LOCAL DATA — Grammar N3 (50 soal) + N2 (30 soal)
+// ============================================================
+const LOCAL = {
+  N3: {
+    grammar: [
+      {q:'彼は学校___来なかった。',choices:['に','へ','を','から'],answer:0,tag:'助詞〜に',explain:'「に」menunjukkan tujuan/tempat datang. "gakkou ni konakatta" = tidak datang ke sekolah.'},
+      {q:'映画を見た___、泣いてしまった。',choices:['とき','から','ので','けど'],answer:2,tag:'〜ので',explain:'「ので」= alasan sopan. Karena menonton film, (saya) menangis.'},
+      {q:'もっと早く起きれば___のに。',choices:['いい','よかった','した','できた'],answer:1,tag:'〜ばよかった',explain:'「ればよかった」= penyesalan. Seharusnya bangun lebih awal.'},
+      {q:'この問題は難し___、諦めないで。',choices:['くても','くて','いから','すぎて'],answer:0,tag:'〜ても',explain:'「くても」= meskipun ~. Meskipun sulit, jangan menyerah.'},
+      {q:'彼女は日本語___上手です。',choices:['が','は','を','に'],answer:0,tag:'能力のが',explain:'「が」dipakai untuk kemampuan. "nihongo ga jouzu" = pandai bahasa Jepang.'},
+      {q:'電車___乗って、駅まで行った。',choices:['を','で','に','の'],answer:1,tag:'手段ので',explain:'「で」= cara/alat. Naik kereta, pergi ke stasiun.'},
+      {q:'試験に合格する___、一生懸命勉強した。',choices:['ため','から','ので','まで'],answer:0,tag:'目的のために',explain:'「ために」= untuk tujuan. Untuk lulus ujian, belajar keras.'},
+      {q:'雨___降っても、行きます。',choices:['が','に','を','で'],answer:0,tag:'〜ても',explain:'「雨が降っても」= meskipun hujan turun.'},
+      {q:'日本語は難しい___、おもしろい。',choices:['が','けど','だから','ので'],answer:1,tag:'〜けど',explain:'「けど」= tapi. Sulit, tapi menarik.'},
+      {q:'もう少し___いただけませんか。',choices:['待って','待ち','待つ','待た'],answer:0,tag:'〜ていただけませんか',explain:'Te-form + いただけませんか = permintaan sopan.'},
+      {q:'彼は疲れた___で、眠っている。',choices:['よう','そう','らしい','はず'],answer:1,tag:'〜そうだ',explain:'「〜そうだ」= kelihatannya. Kelihatannya lelah, sedang tidur.'},
+      {q:'薬を飲んだ___、すぐ良くなった。',choices:['たら','から','ので','ても'],answer:0,tag:'〜たら',explain:'「たら」= setelah/kalau. Setelah minum obat, langsung membaik.'},
+      {q:'寒い___、コートを着た。',choices:['ので','のに','から','けど'],answer:0,tag:'〜ので',explain:'「ので」lebih sopan dari「から」. Karena dingin, memakai mantel.'},
+      {q:'この映画___見たことがある。',choices:['は','を','が','で'],answer:1,tag:'〜を見たことがある',explain:'「を見たことがある」= pernah menonton.'},
+      {q:'彼は___かのように泣いた。',choices:['子供','子供の','子供だ','子供な'],answer:1,tag:'〜かのように',explain:'「〜かのように」= seolah-olah. Menangis seolah-olah seperti anak kecil.'},
+      {q:'宿題を___まま、寝てしまった。',choices:['しない','していない','しなかった','してない'],answer:1,tag:'〜たまま',explain:'「〜ないまま」= tetap dalam kondisi tidak ~. Tidur dengan kondisi PR belum dikerjakan.'},
+      {q:'彼は来る___来ない___、わからない。',choices:['か〜か','の〜の','が〜が','と〜と'],answer:0,tag:'〜か〜か',explain:'「か〜か」= apakah ~ atau ~. Tidak tahu apakah dia datang atau tidak.'},
+      {q:'急いだ___に、電車に乗り遅れた。',choices:['のに','ので','から','けど'],answer:0,tag:'〜のに',explain:'「のに」= padahal/meskipun (kontras). Padahal sudah terburu-buru, tetap ketinggalan kereta.'},
+      {q:'この映画は___すぎて、眠くなった。',choices:['つまら','つまらな','つまらない','つまらなく'],answer:1,tag:'〜すぎる',explain:'形容詞のstem + すぎる = terlalu ~. Filmnya terlalu membosankan sehingga mengantuk.'},
+      {q:'子供___、こんな難しい問題が解けない。',choices:['だから','なので','だし','じゃあるまいし'],answer:3,tag:'〜じゃあるまいし',explain:'「じゃあるまいし」= kamu bukan ~, jadi... Kamu bukan anak kecil, masa tidak bisa soal seperti ini.'},
+      {q:'もし雨が___、試合は中止です。',choices:['降ったら','降るなら','降れば','降っても'],answer:0,tag:'〜たら (条件)',explain:'「たら」untuk kondisi hipotetis. Kalau hujan turun, pertandingan dibatalkan.'},
+      {q:'先生___言われた通りにやった。',choices:['が','に','で','を'],answer:1,tag:'〜に言われる',explain:'「に言われる」= diperintahkan oleh ~. Melakukan sesuai yang diperintahkan guru.'},
+      {q:'日本に来て___年になります。',choices:['三','三の','三が','三も'],answer:0,tag:'〜年になる',explain:'「〜年になる」= sudah ~ tahun. Sudah tiga tahun sejak datang ke Jepang.'},
+      {q:'彼女は歌___上手で、ダンスも得意だ。',choices:['は','も','が','と'],answer:1,tag:'〜も (addition)',explain:'「も」= juga. Pandai menyanyi, dan juga pintar menari.'},
+      {q:'この仕事は私___できません。',choices:['には','でも','しか','だけ'],answer:2,tag:'〜しかできない',explain:'「しか〜ない」= hanya ~. Pekerjaan ini hanya bisa dilakukan oleh saya.'},
+      {q:'彼は約束___守らなかった。',choices:['が','を','に','で'],answer:1,tag:'〜を守る',explain:'「約束を守る」= menepati janji. 約束 diikuti partikel を.'},
+      {q:'試合が始まる___に、練習した。',choices:['まえ','まえで','まえに','まえから'],answer:2,tag:'〜前に',explain:'「〜前に」= sebelum ~. Berlatih sebelum pertandingan dimulai.'},
+      {q:'彼は風邪___引いた。',choices:['が','を','に','で'],answer:1,tag:'〜を引く',explain:'「風邪を引く」= masuk angin. Idiom tetap dengan を.'},
+      {q:'疲れている___に、まだ働いている。',choices:['のに','ので','から','けど'],answer:0,tag:'〜のに',explain:'「のに」= padahal. Padahal lelah, tapi masih bekerja.'},
+      {q:'あの店のケーキは食べる___がある。',choices:['価値','意味','必要','理由'],answer:0,tag:'〜価値がある',explain:'「〜価値がある」= layak untuk ~. Kue di toko itu layak untuk dimakan.'},
+      {q:'彼女は美しい___、頭もいい。',choices:['うえ','だけで','のみか','ばかりか'],answer:3,tag:'〜ばかりか',explain:'「ばかりか」= tidak hanya ~, bahkan. Tidak hanya cantik, bahkan otaknya pun bagus.'},
+      {q:'日本語を勉強し___います。',choices:['て','てい','てお','で'],answer:0,tag:'〜ている',explain:'「〜ている」= sedang ~ / kebiasaan. Sedang belajar bahasa Jepang.'},
+      {q:'この問題、難し___ね。',choices:['そう','よう','らしい','みたい'],answer:0,tag:'〜そう (様態)',explain:'「〜そう」dari penampilan = kelihatannya sulit.'},
+      {q:'彼___来てくれれば、助かるのに。',choices:['が','に','でも','さえ'],answer:3,tag:'〜さえ〜ば',explain:'「〜さえ〜ば」= asal ~ saja. Asal dia datang, akan sangat terbantu.'},
+      {q:'もう少し___ば良かった。',choices:['考える','考えれ','考えた','考え'],answer:1,tag:'〜ればよかった',explain:'「〜ればよかった」= seharusnya ~. Seharusnya dipikir lebih baik.'},
+      {q:'駅___、銀行があります。',choices:['のそば','のそばに','のそばが','のそばで'],answer:1,tag:'〜のそばに',explain:'「のそばに」= di sebelah ~. Di sebelah stasiun ada bank.'},
+      {q:'この薬は一日___回飲んでください。',choices:['三','三の','三を','三が'],answer:0,tag:'〜回 (counter)',explain:'「〜回」= ~ kali. Minum obat ini tiga kali sehari.'},
+      {q:'彼は朝から___何も食べていない。',choices:['ずっと','もう','まだ','また'],answer:0,tag:'ずっと',explain:'「ずっと」= terus-menerus. Dari pagi terus tidak makan apa-apa.'},
+      {q:'先生に___もらいました。',choices:['教えて','教え','教える','教えた'],answer:0,tag:'〜てもらう',explain:'「〜てもらう」= meminta tolong agar ~. Diajari oleh guru.'},
+      {q:'映画が終わった___、友達と食事した。',choices:['あと','あとで','あとに','あとから'],answer:1,tag:'〜た後で',explain:'「〜た後で」= setelah ~. Setelah film selesai, makan bersama teman.'},
+      {q:'彼___この秘密を知っているのは私だけだ。',choices:['以外','以上','以下','以内'],answer:0,tag:'〜以外',explain:'「以外」= selain ~. Selain dia, hanya saya yang tahu rahasia ini.'},
+      {q:'友達が来る___、部屋を掃除した。',choices:['まえに','ために','ところで','うちに'],answer:0,tag:'〜前に',explain:'「前に」= sebelum ~. Membersihkan kamar sebelum teman datang.'},
+      {q:'もっと練習すれば、上手___。',choices:['になる','になって','にする','にした'],answer:0,tag:'〜になる',explain:'「〜になる」= menjadi ~. Kalau lebih banyak latihan, akan menjadi mahir.'},
+      {q:'山田さんは今___ですか。',choices:['どこ','どこか','どこに','どこへ'],answer:0,tag:'どこ (疑問詞)',explain:'「どこ」= di mana. Sekarang Yamada-san ada di mana?'},
+      {q:'あの映画、感動した___！',choices:['よ','ね','な','の'],answer:0,tag:'終助詞〜よ',explain:'「よ」= menegaskan informasi kepada lawan bicara. Film itu benar-benar mengharukan!'},
+      {q:'試合に負けた___、全力を尽くした。',choices:['が','けど','のに','ので'],answer:1,tag:'〜けど (逆接)',explain:'「けど」= tapi. Kalah dalam pertandingan, tapi sudah berusaha sepenuh tenaga.'},
+      {q:'彼女___来るかどうかわからない。',choices:['が','は','に','を'],answer:0,tag:'〜かどうか',explain:'「〜かどうか」= apakah ~ atau tidak. Tidak tahu apakah dia datang atau tidak.'},
+      {q:'部長___連絡してください。',choices:['に','へ','を','で'],answer:0,tag:'〜に連絡する',explain:'「に連絡する」= menghubungi ~. Tolong hubungi kepala bagian.'},
+      {q:'彼は優しい___、時々厳しい。',choices:['が','けど','し','のに'],answer:0,tag:'〜が (逆接)',explain:'「が」= namun/tapi (formal). Dia baik, namun kadang tegas.'},
+      {q:'日本語が___ようになりました。',choices:['話せる','話せ','話す','話した'],answer:0,tag:'〜ようになる',explain:'「〜ようになる」= menjadi bisa ~. Menjadi bisa berbicara bahasa Jepang.'},
+    ],
+    kanji: [
+      {char:'駅',reading:'えき',meaning:'Stasiun',onyomi:'エキ',kunyomi:'えき',wrong_readings:['さき','えか','いき'],wrong_meanings:['Jalan','Toko','Peta']},
+      {char:'病',reading:'びょう',meaning:'Sakit',onyomi:'ビョウ',kunyomi:'や（む）',wrong_readings:['かぜ','ちゅう','ふん'],wrong_meanings:['Sehat','Gembira','Kuat']},
+      {char:'運',reading:'うん',meaning:'Keberuntungan',onyomi:'ウン',kunyomi:'はこ（ぶ）',wrong_readings:['あん','けん','うら'],wrong_meanings:['Berhenti','Tenggelam','Jatuh']},
+      {char:'映',reading:'えい',meaning:'Film/Memantul',onyomi:'エイ',kunyomi:'うつ（る）',wrong_readings:['よう','かい','ひ'],wrong_meanings:['Mendengar','Berlari','Makan']},
+      {char:'旅',reading:'りょ',meaning:'Perjalanan',onyomi:'リョ',kunyomi:'たび',wrong_readings:['とう','さく','ゆ'],wrong_meanings:['Belajar','Tidur','Bekerja']},
+      {char:'親',reading:'しん',meaning:'Orang tua/Akrab',onyomi:'シン',kunyomi:'おや',wrong_readings:['こ','わこ','む'],wrong_meanings:['Anak','Musuh','Orang asing']},
+      {char:'感',reading:'かん',meaning:'Perasaan',onyomi:'カン',kunyomi:'—',wrong_readings:['こう','なん','しょ'],wrong_meanings:['Melihat','Mendengar','Berbicara']},
+      {char:'産',reading:'さん',meaning:'Produksi/Lahir',onyomi:'サン',kunyomi:'う（む）',wrong_readings:['にん','かん','でん'],wrong_meanings:['Mati','Beli','Buang']},
+      {char:'役',reading:'やく',meaning:'Peran/Jabatan',onyomi:'ヤク',kunyomi:'—',wrong_readings:['せい','どう','ふく'],wrong_meanings:['Bermain','Belajar','Berlari']},
+      {char:'温',reading:'おん',meaning:'Hangat',onyomi:'オン',kunyomi:'あたた（かい）',wrong_readings:['れい','ちょ','き'],wrong_meanings:['Dingin','Cepat','Keras']},
+      {char:'決',reading:'けつ',meaning:'Memutuskan',onyomi:'ケツ',kunyomi:'き（める）',wrong_readings:['しん','かん','そん'],wrong_meanings:['Bertanya','Melupakan','Membatalkan']},
+      {char:'相',reading:'そう',meaning:'Bersama/Wajah',onyomi:'ソウ',kunyomi:'あい',wrong_readings:['ひと','よ','おお'],wrong_meanings:['Sendiri','Jauh','Kecil']},
+      {char:'受',reading:'じゅ',meaning:'Menerima',onyomi:'ジュ',kunyomi:'う（ける）',wrong_readings:['さ','お','つ'],wrong_meanings:['Memberi','Menolak','Melempar']},
+      {char:'末',reading:'まつ',meaning:'Akhir/Ujung',onyomi:'マツ',kunyomi:'すえ',wrong_readings:['もと','なか','はじ'],wrong_meanings:['Awal','Tengah','Permulaan']},
+      {char:'化',reading:'か',meaning:'Berubah',onyomi:'カ',kunyomi:'ば（ける）',wrong_readings:['はく','てん','すい'],wrong_meanings:['Berhenti','Berlanjut','Tetap']},
+      {char:'科',reading:'か',meaning:'Departemen/Ilmu',onyomi:'カ',kunyomi:'—',wrong_readings:['のり','や','と'],wrong_meanings:['Lagu','Senjata','Kendaraan']},
+      {char:'区',reading:'く',meaning:'Distrik',onyomi:'ク',kunyomi:'—',wrong_readings:['まち','けん','とし'],wrong_meanings:['Desa','Prefektur','Kota']},
+      {char:'他',reading:'た',meaning:'Lain/Orang lain',onyomi:'タ',kunyomi:'ほか',wrong_readings:['じ','よ','ほん'],wrong_meanings:['Diri sendiri','Keluarga','Teman']},
+      {char:'指',reading:'し',meaning:'Jari/Menunjuk',onyomi:'シ',kunyomi:'ゆび・さ（す）',wrong_readings:['て','うで','あし'],wrong_meanings:['Tangan','Lengan','Kaki']},
+      {char:'様',reading:'よう',meaning:'Cara/Seperti',onyomi:'ヨウ',kunyomi:'さま',wrong_readings:['かた','ほう','て'],wrong_meanings:['Orang','Arah','Tangan']},
+      {char:'以',reading:'い',meaning:'Dengan/Lebih dari',onyomi:'イ',kunyomi:'—',wrong_readings:['う','え','お'],wrong_meanings:['Atas','Bawah','Dalam']},
+      {char:'位',reading:'い',meaning:'Posisi/Peringkat',onyomi:'イ',kunyomi:'くらい',wrong_readings:['じ','ち','に'],wrong_meanings:['Waktu','Tanah','Dua']},
+      {char:'医',reading:'い',meaning:'Dokter/Medis',onyomi:'イ',kunyomi:'—',wrong_readings:['やく','ほう','そう'],wrong_meanings:['Hukum','Cara','Semua']},
+      {char:'意',reading:'い',meaning:'Pikiran/Maksud',onyomi:'イ',kunyomi:'—',wrong_readings:['こころ','き','あた'],wrong_meanings:['Perasaan','Semangat','Sekitar']},
+      {char:'育',reading:'いく',meaning:'Mendidik/Tumbuh',onyomi:'イク',kunyomi:'そだ（てる）',wrong_readings:['おし','まな','まな'],wrong_meanings:['Mengajar','Belajar','Menghafal']},
+      {char:'員',reading:'いん',meaning:'Anggota/Pegawai',onyomi:'イン',kunyomi:'—',wrong_readings:['かい','しゃ','ぶ'],wrong_meanings:['Pertemuan','Perusahaan','Bagian']},
+      {char:'院',reading:'いん',meaning:'Gedung institusi',onyomi:'イン',kunyomi:'—',wrong_readings:['かん','どう','じょ'],wrong_meanings:['Gedung','Aula','Tempat']},
+      {char:'飲',reading:'いん',meaning:'Minum',onyomi:'イン',kunyomi:'の（む）',wrong_readings:['た','す','の'],wrong_meanings:['Makan','Menghisap','Minum obat']},
+      {char:'運',reading:'うん',meaning:'Mengangkut/Nasib',onyomi:'ウン',kunyomi:'はこ（ぶ）',wrong_readings:['どう','こう','ゆ'],wrong_meanings:['Bergerak','Pergi','Berlayar']},
+      {char:'映',reading:'えい',meaning:'Memantulkan',onyomi:'エイ',kunyomi:'うつ（る）',wrong_readings:['ひか','かが','て'],wrong_meanings:['Bersinar','Memantul','Menyentuh']},
+      {char:'泳',reading:'えい',meaning:'Berenang',onyomi:'エイ',kunyomi:'およ（ぐ）',wrong_readings:['はし','とぶ','ある'],wrong_meanings:['Berlari','Terbang','Berjalan']},
+      {char:'駅',reading:'えき',meaning:'Stasiun kereta',onyomi:'エキ',kunyomi:'えき',wrong_readings:['みなと','くうこう','とまり'],wrong_meanings:['Pelabuhan','Bandara','Penginapan']},
+      {char:'選',reading:'せん',meaning:'Memilih',onyomi:'セン',kunyomi:'えら（ぶ）',wrong_readings:['けつ','はん','と'],wrong_meanings:['Memutuskan','Menilai','Mengambil']},
+      {char:'送',reading:'そう',meaning:'Mengirim',onyomi:'ソウ',kunyomi:'おく（る）',wrong_readings:['とど','はこ','もた'],wrong_meanings:['Mengantarkan','Mengangkut','Membawa']},
+      {char:'族',reading:'ぞく',meaning:'Suku/Keluarga',onyomi:'ゾク',kunyomi:'—',wrong_readings:['かぞく','いえ','や'],wrong_meanings:['Keluarga besar','Rumah','Bangunan']},
+      {char:'他',reading:'た',meaning:'Lainnya',onyomi:'タ',kunyomi:'ほか',wrong_readings:['べつ','さら','また'],wrong_meanings:['Berbeda','Lagi','Kembali']},
+      {char:'体',reading:'たい',meaning:'Tubuh',onyomi:'タイ',kunyomi:'からだ',wrong_readings:['あたま','て','あし'],wrong_meanings:['Kepala','Tangan','Kaki']},
+      {char:'待',reading:'たい',meaning:'Menunggu',onyomi:'タイ',kunyomi:'ま（つ）',wrong_readings:['のぞ','き','まち'],wrong_meanings:['Mengharapkan','Mendengar','Kota']},
+      {char:'対',reading:'たい',meaning:'Melawan/Terhadap',onyomi:'タイ',kunyomi:'—',wrong_readings:['てき','むか','はん'],wrong_meanings:['Musuh','Menghadap','Sebaliknya']},
+    ]
+  },
+  N2: {
+    grammar: [
+      {q:'この計画は成功する___がない。',choices:['はず','わけ','こと','もの'],answer:1,tag:'〜わけがない',explain:'「わけがない」= tidak mungkin. Rencana ini tidak mungkin berhasil.'},
+      {q:'努力した___、結果が出なかった。',choices:['とおり','にもかかわらず','ために','ものの'],answer:1,tag:'〜にもかかわらず',explain:'「にもかかわらず」= meskipun. Meskipun sudah berusaha, hasilnya tidak keluar.'},
+      {q:'締め切りに間に合う___、急いで書いた。',choices:['ために','ように','として','つもりで'],answer:0,tag:'〜ために',explain:'「ために」= untuk tujuan. Untuk tepat waktu, buru-buru menulis.'},
+      {q:'問題が解決され___、会議を終えた。',choices:['たため','てから','たうえで','つつ'],answer:2,tag:'〜たうえで',explain:'「〜たうえで」= setelah ~ baru. Setelah masalah diselesaikan, rapat diakhiri.'},
+      {q:'彼女は疲れて___、まだ仕事を続けた。',choices:['さえも','いても','いながら','いつつ'],answer:3,tag:'〜つつも',explain:'「〜つつも」= meskipun sambil ~. Meskipun lelah, masih melanjutkan pekerjaan.'},
+      {q:'彼___あれだけ頑張ったのだから、合格するはずだ。',choices:['が','に','で','として'],answer:3,tag:'〜として',explain:'「として」= sebagai/dari perspektif. Bagi dia yang sudah berjuang sebegitu keras, harusnya lulus.'},
+      {q:'この作業は一人___できないほど大変だ。',choices:['では','に','でも','から'],answer:0,tag:'〜では',explain:'「一人では」= sendirian saja. Tidak bisa dilakukan sendirian, sangat berat.'},
+      {q:'食べる___、薬を飲んでください。',choices:['まえに','あとに','ために','ながら'],answer:0,tag:'〜前に',explain:'「食べる前に」= sebelum makan. Minum obat sebelum makan.'},
+      {q:'試験に合格した___、すぐ親に報告した。',choices:['とたん','とたんに','かと思ったら','次第'],answer:3,tag:'〜次第',explain:'「〜次第」= segera setelah ~. Segera setelah lulus ujian, lapor ke orang tua.'},
+      {q:'いくら頑張っ___、彼には勝てない。',choices:['ても','たら','ては','なら'],answer:0,tag:'〜ても',explain:'「いくら〜ても」= no matter how much. Sepandai apapun berusaha, tidak bisa mengalahkan dia.'},
+      {q:'彼の言う___、間違いない。',choices:['通り','ほど','だけ','ばかり'],answer:0,tag:'〜通り',explain:'「〜通り」= sesuai dengan ~. Sesuai yang dia katakan, tidak ada kesalahan.'},
+      {q:'この問題は複雑な___、解決策が見つからない。',choices:['ため','せい','おかげ','から'],answer:1,tag:'〜せいで',explain:'「〜せいで」= karena (hal negatif). Karena masalah yang kompleks, solusi tidak ditemukan.'},
+      {q:'会議が長引いた___、終電に乗れなかった。',choices:['せいで','おかげで','ために','ものの'],answer:0,tag:'〜せいで',explain:'「せいで」= gara-gara (negatif). Gara-gara rapat yang berlarut, ketinggalan kereta terakhir.'},
+      {q:'この映画___感動したことはない。',choices:['ほど','だけ','しか','ばかり'],answer:0,tag:'〜ほど〜ない',explain:'「〜ほど〜ない」= tidak seberapa seperti ~. Belum pernah terharu separah film ini.'},
+      {q:'卒業___、就職活動を始めた。',choices:['をきっかけに','にとって','に対して','において'],answer:0,tag:'〜をきっかけに',explain:'「をきっかけに」= dengan ~ sebagai pemicu. Dengan kelulusan sebagai pemicu, mulai job hunting.'},
+      {q:'この仕事は経験___こそ、うまくできる。',choices:['が','を','に','で'],answer:0,tag:'〜こそ',explain:'「〜こそ」= justru ~lah yang. Justru dengan pengalamanlah pekerjaan ini bisa dilakukan dengan baik.'},
+      {q:'何度説明して___、理解してもらえない。',choices:['も','ても','なら','ので'],answer:1,tag:'〜ても',explain:'「〜ても」= meskipun ~. Meskipun sudah menjelaskan berkali-kali, tidak bisa dipahami.'},
+      {q:'彼は病気である___、会社に来た。',choices:['にしろ','ものの','に対して','にもかかわらず'],answer:3,tag:'〜にもかかわらず',explain:'「にもかかわらず」= walaupun. Walaupun sakit, tetap datang ke kantor.'},
+      {q:'先生___、こんな問題も解けないとは情けない。',choices:['ともあろう','だけあって','にしては','としては'],answer:0,tag:'〜ともあろう',explain:'「〜ともあろう者が」= untuk seseorang yang (seharusnya tinggi statusnya). Untuk seorang guru, memalukan tidak bisa menjawab soal seperti ini.'},
+      {q:'彼女が努力した___、成功するはずだ。',choices:['だけ','ほど','以上','ものの'],answer:2,tag:'〜以上',explain:'「〜以上」= karena sudah ~, maka seharusnya. Karena sudah berusaha keras, seharusnya berhasil.'},
+      {q:'その件については、後で___。',choices:['述べます','述べましょう','述べてください','述べさせていただきます'],answer:3,tag:'〜させていただく',explain:'「〜させていただく」= izinkan saya ~. Izinkan saya menjelaskan hal tersebut nanti.'},
+      {q:'彼___、あんな失礼なことを言うとは思わなかった。',choices:['にしては','にとって','に対して','として'],answer:0,tag:'〜にしては',explain:'「にしては」= untuk ukuran ~. Untuk ukuran dia, tidak menyangka dia bisa berkata sekasar itu.'},
+      {q:'今後___、環境問題はますます重要になる。',choices:['において','に対して','に関して','にとって'],answer:0,tag:'〜において',explain:'「において」= di dalam / dalam konteks. Ke depannya, masalah lingkungan akan semakin penting.'},
+      {q:'時間___許す___、もっと話したかった。',choices:['が〜なら','が〜限り','さえ〜ば','でも〜ても'],answer:1,tag:'〜が許す限り',explain:'「時間が許す限り」= selama waktu memungkinkan. Selama waktu memungkinkan, ingin lebih banyak bicara.'},
+      {q:'その問題___関する報告書を提出した。',choices:['に','を','が','で'],answer:0,tag:'〜に関する',explain:'「〜に関する」= mengenai ~. Menyerahkan laporan mengenai masalah tersebut.'},
+      {q:'彼女の意見___賛成できない部分もある。',choices:['に対して','について','において','に関して'],answer:0,tag:'〜に対して',explain:'「〜に対して」= terhadap ~. Ada bagian yang tidak bisa setuju terhadap pendapat dia.'},
+      {q:'このプロジェクトは___次第で成否が決まる。',choices:['やり方','やり方の','やり方が','やり方を'],answer:0,tag:'〜次第で',explain:'「〜次第で」= tergantung pada ~. Berhasil tidaknya proyek ini tergantung pada caranya.'},
+      {q:'長年の夢___ついに実現した。',choices:['が','を','は','も'],answer:0,tag:'夢が実現する',explain:'「夢が実現する」= mimpi terwujud. Mimpi yang sudah lama akhirnya terwujud.'},
+      {q:'申し訳___ですが、その件は担当外です。',choices:['ない','ありません','ございません','なく'],answer:2,tag:'申し訳ございません',explain:'「申し訳ございません」= bentuk formal sangat sopan dari minta maaf.'},
+      {q:'日程___、改めてご連絡いたします。',choices:['について','に関して','が決まり次第','が決まったら'],answer:2,tag:'〜次第',explain:'「〜次第」= segera setelah ~. Segera setelah jadwal ditentukan, akan menghubungi kembali.'},
+    ],
+    kanji: [
+      {char:'概',reading:'がい',meaning:'Gambaran umum',onyomi:'ガイ',kunyomi:'おおむね',wrong_readings:['たい','はい','ない'],wrong_meanings:['Detail','Tidak ada','Terlarang']},
+      {char:'促',reading:'そく',meaning:'Mendorong',onyomi:'ソク',kunyomi:'うなが（す）',wrong_readings:['ほう','きゅう','しょ'],wrong_meanings:['Memperlambat','Membatasi','Menghentikan']},
+      {char:'維',reading:'い',meaning:'Mempertahankan',onyomi:'イ',kunyomi:'—',wrong_readings:['き','ち','ぶ'],wrong_meanings:['Merusak','Mengubah','Menghancurkan']},
+      {char:'把',reading:'は',meaning:'Menggenggam',onyomi:'ハ',kunyomi:'—',wrong_readings:['ほ','ふ','ぱ'],wrong_meanings:['Melepaskan','Membuang','Menolak']},
+      {char:'評',reading:'ひょう',meaning:'Menilai',onyomi:'ヒョウ',kunyomi:'—',wrong_readings:['そう','さく','かい'],wrong_meanings:['Membuat','Menciptakan','Menghancurkan']},
+      {char:'展',reading:'てん',meaning:'Membentangkan',onyomi:'テン',kunyomi:'の（べる）',wrong_readings:['かん','れん','とく'],wrong_meanings:['Menyembunyikan','Mengumpulkan','Merapikan']},
+      {char:'判',reading:'はん',meaning:'Memutuskan',onyomi:'ハン',kunyomi:'—',wrong_readings:['かん','さい','みつ'],wrong_meanings:['Ragu-ragu','Membiarkan','Mengabaikan']},
+      {char:'効',reading:'こう',meaning:'Efektif',onyomi:'コウ',kunyomi:'き（く）',wrong_readings:['むだ','ひく','ふ'],wrong_meanings:['Tidak berguna','Lambat','Merusak']},
+      {char:'複',reading:'ふく',meaning:'Berganda/Kompleks',onyomi:'フク',kunyomi:'—',wrong_readings:['たん','かん','い'],wrong_meanings:['Tunggal','Lurus','Mudah']},
+      {char:'根',reading:'こん',meaning:'Akar/Dasar',onyomi:'コン',kunyomi:'ね',wrong_readings:['かん','し','えだ'],wrong_meanings:['Pucuk','Cabang','Daun']},
+      {char:'拡',reading:'かく',meaning:'Memperluas',onyomi:'カク',kunyomi:'ひろ（げる）',wrong_readings:['せん','たん','はん'],wrong_meanings:['Mempersempit','Menutup','Mengurangi']},
+      {char:'縮',reading:'しゅく',meaning:'Mengecilkan',onyomi:'シュク',kunyomi:'ちぢ（む）',wrong_readings:['かく','ぞう','かい'],wrong_meanings:['Memperluas','Menambah','Menghapus']},
+      {char:'討',reading:'とう',meaning:'Mendiskusikan',onyomi:'トウ',kunyomi:'う（つ）',wrong_readings:['ぎろん','はなし','そうだん'],wrong_meanings:['Perdebatan','Cerita','Konsultasi']},
+      {char:'論',reading:'ろん',meaning:'Argumen/Diskusi',onyomi:'ロン',kunyomi:'—',wrong_readings:['き','かん','はん'],wrong_meanings:['Perasaan','Opini','Pertentangan']},
+      {char:'績',reading:'せき',meaning:'Prestasi/Hasil',onyomi:'セキ',kunyomi:'—',wrong_readings:['か','こう','さく'],wrong_meanings:['Nilai','Keberhasilan','Karya']},
+      {char:'資',reading:'し',meaning:'Modal/Sumber daya',onyomi:'シ',kunyomi:'—',wrong_readings:['きん','ひん','もの'],wrong_meanings:['Uang','Barang','Benda']},
+      {char:'策',reading:'さく',meaning:'Rencana/Strategi',onyomi:'サク',kunyomi:'—',wrong_readings:['たく','かく','りゃく'],wrong_meanings:['Rancangan','Sketsa','Singkatan']},
+      {char:'創',reading:'そう',meaning:'Menciptakan',onyomi:'ソウ',kunyomi:'つく（る）',wrong_readings:['はじ','き','つき'],wrong_meanings:['Memulai','Memotong','Bulan']},
+      {char:'抽',reading:'ちゅう',meaning:'Mengambil/Menarik',onyomi:'チュウ',kunyomi:'—',wrong_readings:['ひ','と','さ'],wrong_meanings:['Menarik','Mengambil','Menusuk']},
+      {char:'慮',reading:'りょ',meaning:'Mempertimbangkan',onyomi:'リョ',kunyomi:'おもんぱか（る）',wrong_readings:['かんが','おも','むか'],wrong_meanings:['Berpikir','Merasa','Menghadapi']},
+    ]
+  }
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let currentLevel = 'N3';
+let currentVocabIdx = 0, vocabQueue = [], isFlipped = false;
+let grammarIdx = 0, grammarData = [], grammarAnswered = false, grammarIsAI = false;
+let kanjiIdx = 0, kanjiData = [], kanjiMode = 'reading', kanjiAnswered = false, kanjiIsAI = false;
+let mockNum = 10, mockIdx = 0, mockData = [], mockCorrect = 0;
+let mockTimer = null, mockSeconds = 0, mockAnswered = false;
+let stats = JSON.parse(localStorage.getItem('jlpt_stats2') || '{"vocab":0,"streak":0,"correct":0,"total":0}');
+function saveStats(){ localStorage.setItem('jlpt_stats2', JSON.stringify(stats)); }
+
+// ============================================================
+// NAV
+// ============================================================
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  const nb=document.getElementById('nav-'+name);
+  if(nb) nb.classList.add('active');
+  updateHomeStats();
+}
+function goSection(name){
+  showPage(name);
+  if(name==='vocab') initVocab();
+  if(name==='grammar') initGrammar();
+  if(name==='kanji') initKanji();
+}
+function goHome(){ showPage('home'); }
+function setLevel(lv,btn){
+  currentLevel=lv;
+  document.querySelectorAll('.level-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  showToast('Level: '+lv+' ✓');
+}
+function updateHomeStats(){
+  document.getElementById('stat-vocab').textContent=stats.vocab;
+  document.getElementById('stat-streak').textContent=stats.streak;
+  document.getElementById('stat-acc').textContent=stats.total>0?Math.round(stats.correct/stats.total*100)+'%':'—';
+}
+
+// ============================================================
+// VOCAB (API)
+// ============================================================
+const VOCAB_API='https://jlpt-vocab-api.vercel.app/api';
+function levelNum(lv){ return lv==='N3'?3:2; }
+
+async function initVocab(){
+  currentVocabIdx=0; isFlipped=false; vocabQueue=[];
+  document.getElementById('vocab-loading').style.display='block';
+  document.getElementById('vocab-card-wrap').style.display='none';
+  document.getElementById('vocab-actions').style.display='none';
+  document.getElementById('vocab-tap-hint').style.display='none';
+  document.getElementById('vocab-progress').innerHTML='';
+  try{
+    const r1=await fetch(`${VOCAB_API}/words?level=${levelNum(currentLevel)}&limit=1`);
+    const d1=await r1.json();
+    const total=d1.total||700;
+    const offset=Math.floor(Math.random()*Math.max(1,total-20));
+    const r2=await fetch(`${VOCAB_API}/words?level=${levelNum(currentLevel)}&limit=20&offset=${offset}`);
+    const d2=await r2.json();
+    if(!d2.words||d2.words.length===0) throw new Error('empty');
+    vocabQueue=shuffle(d2.words).map(w=>({jp:w.word,reading:w.furigana||w.word,meaning:w.meaning,example:''}));
+    document.getElementById('vocab-loading').style.display='none';
+    document.getElementById('vocab-card-wrap').style.display='block';
+    renderVocab();
+    showToast(`✓ ${vocabQueue.length} kata ${currentLevel} dari API`);
+  } catch(e){
+    vocabQueue=[...LOCAL[currentLevel].grammar].slice(0,5).map((_,i)=>({jp:'単語'+i,reading:'たんご',meaning:'Fallback',example:''}));
+    document.getElementById('vocab-loading').style.display='none';
+    document.getElementById('vocab-card-wrap').style.display='block';
+    renderVocab();
+    showToast('⚠ Offline — data lokal');
+  }
+}
+function renderVocab(){
+  const card=vocabQueue[currentVocabIdx];
+  document.getElementById('card-jp').textContent=card.jp;
+  document.getElementById('card-reading').textContent=card.reading;
+  document.getElementById('card-meaning').textContent=card.meaning;
+  document.getElementById('card-type-label').textContent=currentLevel+' VOCAB';
+  document.getElementById('vocab-counter').textContent=(currentVocabIdx+1)+'/'+vocabQueue.length;
+  document.getElementById('vocab-actions').style.display='none';
+  document.getElementById('vocab-tap-hint').style.display='block';
+  const fc=document.getElementById('flashcard');
+  fc.classList.remove('flipped'); isFlipped=false;
+  const prog=document.getElementById('vocab-progress');
+  prog.innerHTML='';
+  vocabQueue.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='cp-dot'+(i<currentVocabIdx?' done':'')+(i===currentVocabIdx?' current':'');
+    prog.appendChild(d);
+  });
+}
+function flipCard(){
+  const fc=document.getElementById('flashcard');
+  isFlipped=!isFlipped; fc.classList.toggle('flipped',isFlipped);
+  if(isFlipped){
+    document.getElementById('vocab-actions').style.display='grid';
+    document.getElementById('vocab-tap-hint').style.display='none';
+  }
+}
+function answerCard(know){
+  if(know){ stats.vocab++; saveStats(); showToast('✓ Bagus!'); }
+  else{ showToast('Coba lagi nanti!'); vocabQueue.push(vocabQueue[currentVocabIdx]); }
+  currentVocabIdx++;
+  if(currentVocabIdx>=vocabQueue.length){ showToast('🎉 Semua kata selesai!'); setTimeout(goHome,1200); return; }
+  renderVocab();
+}
+
+// ============================================================
+// AI GENERATION — robust parser + higher token limit
+// ============================================================
+function safeParseJSON(raw){
+  let text=raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+  const start=text.indexOf('[');
+  if(start===-1) throw new Error('No JSON array');
+  let depth=0,end=-1;
+  for(let i=start;i<text.length;i++){
+    if(text[i]==='[') depth++;
+    else if(text[i]===']'){depth--;if(depth===0){end=i;break;}}
+  }
+  let slice=end!==-1?text.slice(start,end+1):text.slice(start);
+  if(end===-1){
+    const lastComplete=slice.lastIndexOf('},');
+    slice=lastComplete!==-1?slice.slice(0,lastComplete+1)+']':slice+']';
+  }
+  const arr=JSON.parse(slice);
+  if(!Array.isArray(arr)||arr.length===0) throw new Error('Empty array');
+  return arr;
+}
+
+async function callAI(prompt){
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:3000,
+      system:'You are a JSON generator. Output ONLY valid JSON arrays. No markdown, no explanation, no extra text. All string values must use double quotes.',
+      messages:[{role:'user',content:prompt}]
+    })
+  });
+  if(!res.ok) throw new Error('API '+res.status);
+  const data=await res.json();
+  if(data.error) throw new Error(data.error.message);
+  return data.content.map(i=>i.text||'').join('');
+}
+
+async function generateGrammarAI(level){
+  const prompt=`Generate exactly 8 JLPT ${level} grammar quiz questions as a JSON array. Each object: {"q":"Japanese sentence with ___ blank","choices":["opt1","opt2","opt3","opt4"],"answer":0,"tag":"grammar pattern","explain":"short Indonesian explanation"}. answer is index 0-3 of correct choice. Output ONLY the JSON array.`;
+  return safeParseJSON(await callAI(prompt));
+}
+
+async function generateKanjiAI(level){
+  const prompt=`Generate exactly 8 JLPT ${level} kanji quiz questions as a JSON array. Each object: {"char":"漢字","reading":"onyomi in hiragana","meaning":"Indonesian meaning","onyomi":"ON reading","kunyomi":"kun reading or —","wrong_readings":["w1","w2","w3"],"wrong_meanings":["w1","w2","w3"]}. Output ONLY the JSON array.`;
+  return safeParseJSON(await callAI(prompt));
+}
+
+// ============================================================
+// GRAMMAR
+// ============================================================
+async function initGrammar(){
+  grammarIdx=0; grammarAnswered=false;
+  document.getElementById('grammar-loading').style.display='block';
+  document.getElementById('grammar-content').style.display='none';
+  document.getElementById('grammar-source-tag').textContent='AI';
+  document.getElementById('grammar-source-tag').className='source-tag ai';
+
+  try{
+    grammarData=await generateGrammarAI(currentLevel);
+    grammarIsAI=true;
+    showToast('✨ 10 soal grammar baru dari AI!');
+  } catch(e){
+    console.warn('AI gagal, pakai lokal:',e);
+    grammarData=shuffle([...LOCAL[currentLevel].grammar]).slice(0,15);
+    grammarIsAI=false;
+    document.getElementById('grammar-source-tag').textContent='LOKAL';
+    document.getElementById('grammar-source-tag').className='source-tag';
+    showToast('⚠ Offline — 15 soal lokal');
+  }
+  document.getElementById('grammar-loading').style.display='none';
+  document.getElementById('grammar-content').style.display='block';
+  renderGrammar();
+}
+
+function renderGrammar(){
+  const q=grammarData[grammarIdx];
+  document.getElementById('grammar-counter').textContent=(grammarIdx+1)+'/'+grammarData.length;
+  document.getElementById('grammar-progress').style.width=(grammarIdx/grammarData.length*100)+'%';
+  document.getElementById('grammar-tag').textContent=q.tag||'';
+  document.getElementById('grammar-q').textContent=q.q;
+  document.getElementById('grammar-explain').classList.remove('show');
+  document.getElementById('grammar-next-btn').style.display='none';
+  grammarAnswered=false;
+  const container=document.getElementById('grammar-choices');
+  container.innerHTML='';
+  const nums=['①','②','③','④'];
+  q.choices.forEach((c,i)=>{
+    const btn=document.createElement('button');
+    btn.className='choice-btn';
+    btn.innerHTML=`<span class="choice-num">${nums[i]}</span>${c}`;
+    btn.onclick=()=>answerGrammar(i,btn,q);
+    container.appendChild(btn);
+  });
+}
+function answerGrammar(idx,btn,q){
+  if(grammarAnswered) return;
+  grammarAnswered=true; stats.total++;
+  document.querySelectorAll('#grammar-choices .choice-btn').forEach((b,i)=>{
+    if(i===q.answer) b.classList.add('correct');
+    else if(i===idx&&idx!==q.answer) b.classList.add('wrong');
+  });
+  if(idx===q.answer){ stats.correct++; showToast('✓ Benar!'); }
+  else showToast('✗ Salah — lihat penjelasan');
+  saveStats();
+  document.getElementById('grammar-explain').textContent='💡 '+q.explain;
+  document.getElementById('grammar-explain').classList.add('show');
+  document.getElementById('grammar-next-btn').style.display='block';
+}
+function nextGrammar(){
+  grammarIdx++;
+  if(grammarIdx>=grammarData.length){ showToast('🎉 Grammar selesai!'); setTimeout(goHome,1000); return; }
+  renderGrammar();
+}
+
+// ============================================================
+// KANJI
+// ============================================================
+async function initKanji(){
+  kanjiIdx=0; kanjiAnswered=false;
+  document.getElementById('kanji-loading').style.display='block';
+  document.getElementById('kanji-content').style.display='none';
+  document.getElementById('kanji-source-tag').textContent='AI';
+  document.getElementById('kanji-source-tag').className='source-tag ai';
+
+  try{
+    kanjiData=await generateKanjiAI(currentLevel);
+    kanjiIsAI=true;
+    showToast('✨ 10 soal kanji baru dari AI!');
+  } catch(e){
+    console.warn('AI kanji gagal, pakai lokal:',e);
+    kanjiData=shuffle([...LOCAL[currentLevel].kanji]).slice(0,15);
+    kanjiIsAI=false;
+    document.getElementById('kanji-source-tag').textContent='LOKAL';
+    document.getElementById('kanji-source-tag').className='source-tag';
+    showToast('⚠ Offline — kanji lokal');
+  }
+  document.getElementById('kanji-loading').style.display='none';
+  document.getElementById('kanji-content').style.display='block';
+  renderKanji();
+}
+
+function setKanjiMode(mode,btn){
+  kanjiMode=mode;
+  document.querySelectorAll('#page-kanji .level-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(kanjiData.length>0) renderKanji();
+}
+function renderKanji(){
+  const k=kanjiData[kanjiIdx];
+  document.getElementById('kanji-counter').textContent=(kanjiIdx+1)+'/'+kanjiData.length;
+  document.getElementById('kanji-progress').style.width=(kanjiIdx/kanjiData.length*100)+'%';
+  document.getElementById('kanji-char').textContent=k.char;
+  document.getElementById('kanji-explain').classList.remove('show');
+  document.getElementById('kanji-next-btn').style.display='none';
+  kanjiAnswered=false;
+
+  if(kanjiMode==='reading'){
+    document.getElementById('kanji-mode-label').textContent='Pilih cara baca yang benar:';
+    const opts=shuffle([k.reading,...(k.wrong_readings||[]).slice(0,3)]);
+    renderKanjiChoices(opts,k.reading,k);
+  } else {
+    document.getElementById('kanji-mode-label').textContent='Pilih arti yang benar:';
+    const opts=shuffle([k.meaning,...(k.wrong_meanings||[]).slice(0,3)]);
+    renderKanjiChoices(opts,k.meaning,k);
+  }
+}
+function renderKanjiChoices(options,correct,k){
+  const container=document.getElementById('kanji-choices');
+  container.innerHTML='';
+  const nums=['①','②','③','④'];
+  options.forEach((opt,i)=>{
+    const btn=document.createElement('button');
+    btn.className='choice-btn';
+    btn.innerHTML=`<span class="choice-num">${nums[i]}</span>${opt}`;
+    btn.onclick=()=>answerKanji(opt,correct,btn,k);
+    container.appendChild(btn);
+  });
+}
+function answerKanji(selected,correct,btn,k){
+  if(kanjiAnswered) return;
+  kanjiAnswered=true; stats.total++;
+  document.querySelectorAll('#kanji-choices .choice-btn').forEach(b=>{
+    const txt=b.textContent.replace(/[①②③④]/,'').trim();
+    if(txt===correct) b.classList.add('correct');
+    else if(b===btn&&selected!==correct) b.classList.add('wrong');
+  });
+  if(selected===correct){ stats.correct++; showToast('✓ Benar!'); }
+  else showToast('✗ Salah!');
+  saveStats();
+  const expl=`${k.char} — On: ${k.onyomi||'—'} | Kun: ${k.kunyomi||'—'} | 意味: ${k.meaning}`;
+  document.getElementById('kanji-explain').textContent='💡 '+expl;
+  document.getElementById('kanji-explain').classList.add('show');
+  document.getElementById('kanji-next-btn').style.display='block';
+}
+function nextKanji(){
+  kanjiIdx++;
+  if(kanjiIdx>=kanjiData.length){ showToast('🎉 Kanji selesai!'); setTimeout(goHome,1000); return; }
+  renderKanji();
+}
+
+// ============================================================
+// MOCK TEST
+// ============================================================
+function selectMockNum(n,el){
+  mockNum=n;
+  document.querySelectorAll('.config-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function startMock(){
+  const pool=shuffle([...LOCAL[currentLevel].grammar,...(LOCAL[currentLevel==='N3'?'N2':'N3'].grammar)]);
+  mockData=pool.slice(0,mockNum).map(q=>({...q,type:'grammar'}));
+  mockIdx=0; mockCorrect=0; mockSeconds=0; mockAnswered=false;
+  document.getElementById('mock-setup').style.display='none';
+  document.getElementById('mock-test').style.display='block';
+  document.getElementById('mock-result').style.display='none';
+  if(mockTimer) clearInterval(mockTimer);
+  mockTimer=setInterval(()=>{
+    mockSeconds++;
+    const m=String(Math.floor(mockSeconds/60)).padStart(2,'0');
+    const s=String(mockSeconds%60).padStart(2,'0');
+    const td=document.getElementById('mock-timer');
+    td.textContent=m+':'+s;
+    td.className='timer-display'+(mockSeconds>mockNum*30?' warning':'');
+  },1000);
+  renderMock();
+}
+function renderMock(){
+  const q=mockData[mockIdx];
+  document.getElementById('mock-counter').textContent=(mockIdx+1)+'/'+mockData.length;
+  document.getElementById('mock-progress').style.width=(mockIdx/mockData.length*100)+'%';
+  document.getElementById('mock-tag').textContent=q.tag||'';
+  document.getElementById('mock-q').textContent=q.q;
+  document.getElementById('mock-explain').classList.remove('show');
+  document.getElementById('mock-next-btn').style.display='none';
+  mockAnswered=false;
+  const container=document.getElementById('mock-choices');
+  container.innerHTML='';
+  const nums=['①','②','③','④'];
+  q.choices.forEach((c,i)=>{
+    const btn=document.createElement('button');
+    btn.className='choice-btn';
+    btn.innerHTML=`<span class="choice-num">${nums[i]}</span>${c}`;
+    btn.onclick=()=>answerMock(i,btn,q);
+    container.appendChild(btn);
+  });
+}
+function answerMock(idx,btn,q){
+  if(mockAnswered) return;
+  mockAnswered=true;
+  document.querySelectorAll('#mock-choices .choice-btn').forEach((b,i)=>{
+    if(i===q.answer) b.classList.add('correct');
+    else if(i===idx&&idx!==q.answer) b.classList.add('wrong');
+  });
+  if(idx===q.answer){ mockCorrect++; showToast('✓'); }
+  else showToast('✗');
+  document.getElementById('mock-explain').textContent='💡 '+q.explain;
+  document.getElementById('mock-explain').classList.add('show');
+  document.getElementById('mock-next-btn').style.display='block';
+}
+function nextMock(){
+  mockIdx++;
+  if(mockIdx>=mockData.length){ clearInterval(mockTimer); showMockResult(); return; }
+  renderMock();
+}
+function showMockResult(){
+  document.getElementById('mock-test').style.display='none';
+  document.getElementById('mock-result').style.display='block';
+  const pct=Math.round(mockCorrect/mockData.length*100);
+  document.getElementById('result-pct').textContent=pct+'%';
+  document.getElementById('result-verdict').textContent=
+    pct>=80?'素晴らしい！合格レベル 🌟':pct>=60?'もう少し！もっと練習しよう 💪':'まだまだ！諦めないで 🔥';
+  document.getElementById('res-correct').textContent=mockCorrect;
+  document.getElementById('res-wrong').textContent=mockData.length-mockCorrect;
+  const m=String(Math.floor(mockSeconds/60)).padStart(2,'0');
+  const s=String(mockSeconds%60).padStart(2,'0');
+  document.getElementById('res-time').textContent=m+':'+s;
+  stats.correct+=mockCorrect; stats.total+=mockData.length; saveStats();
+}
+function resetMock(){
+  document.getElementById('mock-setup').style.display='block';
+  document.getElementById('mock-test').style.display='none';
+  document.getElementById('mock-result').style.display='none';
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function shuffle(arr){ return [...arr].sort(()=>Math.random()-.5); }
+let toastTimeout;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout=setTimeout(()=>t.classList.remove('show'),1800);
+}
+updateHomeStats();
+</script>
+</body>
+</html>
